@@ -1,0 +1,16 @@
+Django Projects vs Django Applications
+RAD model 
+project-> collections of applications +Internal settings configurations
+1.First you need to create 
+2. Multiple application
+====================================================================================================
+=>Django project is a collections of applications and configurations which forms a full web applications.
+=>Ex.
+	Banking project	
+=>A Django application is responsible to perform a particular task in our entire web applications
+ex.
+loan app
+registration app
+polling app
+=>project = several applications + configuration Information
+	

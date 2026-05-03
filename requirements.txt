@@ -1,0 +1,4 @@
+requirements
+fastapi
+uvicorn
+earthengine-api

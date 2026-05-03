@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>AirSat AI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css"/>
+<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+<style>
+html, body { margin:0; padding:0; height:100%; overflow:hidden; font-family:Arial;}
+#map { height:100%; width:100%; }
+.blink {
+  animation: blinkAnim 0.8s infinite alternate;
+}
+
+@keyframes blinkAnim {
+  from { color: red; }
+  to { color: black; }
+}
+#topBar {
+  position:absolute; top:0; width:100%;
+  background:rgba(0,0,0,0.7); color:white;
+  padding:10px; z-index:1000;
+  display:flex; justify-content:space-between;
+}
+
+#searchBox {
+  position:absolute; top:70px; left:50%;
+  transform:translateX(-50%);
+  padding:8px; width:260px;
+  border-radius:20px; border:1px solid #ccc;
+  z-index:2000;
+}
+
+#infoBox, #dashboardBox {
+  position:absolute; top:60px;
+  background:white; padding:10px;
+  border-radius:8px; z-index:1000;
+}
+
+#infoBox { left:10px; }
+#dashboardBox { right:10px; width:200px; }
+
+.legend {
+  position:absolute; bottom:20px; right:10px;
+  background:white; padding:10px;
+  border-radius:10px; z-index:1000;
+}
+
+#loginBox{
+  position:absolute;
+  top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  background:white;
+  padding:20px;
+  border-radius:10px;
+  z-index:3000;
+}
+</style>
+</head>
+
+<body>
+
+<div id="loginBox">
+  <div id="loginForm">
+    <h3>Login</h3>
+    <input id="user" placeholder="Username"><br><br>
+    <input id="pass" type="password" placeholder="Password"><br><br>
+
+    <button onclick="login()">Login</button>
+    <button onclick="register()">Register</button>
+    <button onclick="resetPassword()">Reset</button>
+  </div>
+</div>
+
+<input id="searchBox" placeholder="Search city...">
+
+<div id="topBar">
+  <span>🌍 AirSat AI</span>
+  <button onclick="toggleMode()">Switch</button>
+</div>
+
+<div id="infoBox">Click map to get AQI</div>
+<div id="dashboardBox">Loading...</div>
+
+<div class="legend">
+  <div>🟩 0–50</div>
+  <div>🟨 51–100</div>
+  <div>🟧 101–150</div>
+  <div>🟥 151–200</div>
+  <div>🟪 200+</div>
+</div>
+
+<canvas id="aqiChart" style="
+position:absolute;
+bottom:120px;
+left:10px;
+width:250px;
+height:150px;
+background:white;
+padding:10px;
+border-radius:10px;
+z-index:1000;"></canvas>
+
+<div id="map"></div>
+
+<!-- SAME HEAD + STYLE (NO CHANGE) -->
+
+<!-- SAME HEAD + STYLE (NO CHANGE) -->
+let heatLayer = null;
+<script>
+function loadHeatmap(){
+
+  fetch("/api/data/")
+  .then(r => r.json())
+  .then(res => {
+
+    if(!res.data || res.data.length === 0){
+      console.log("No heatmap data yet");
+      return;
+    }
+
+    let points = res.data.map(d => [
+      d.lat,
+      d.lon,
+      d.no2 / 300
+    ]);
+
+    if(heatLayer){
+      map.removeLayer(heatLayer);
+    }
+
+    heatLayer = L.heatLayer(points, {
+      radius: 25,
+      blur: 20,
+      maxZoom: 10
+    }).addTo(map);
+
+  });
+
+}
+loadHeatmap(); // first load
+// ===== TOGGLE =====
+let useBackend = false;
+function toggleMode(){
+  useBackend = !useBackend;
+  alert(useBackend ? "Backend Mode 🚀" : "Live API 🌐");
+}
+
+// ===== ELEMENTS =====
+const user = document.getElementById("user");
+const pass = document.getElementById("pass");
+const loginBox = document.getElementById("loginBox");
+const dashboardBox = document.getElementById("dashboardBox");
+
+// ===== AQI COLOR =====
+function getAQIColor(aqi){
+  aqi = Number(aqi);
+  if(aqi <= 50) return "🟩 Good";
+  if(aqi <= 100) return "🟨 Moderate";
+  if(aqi <= 150) return "🟧 Unhealthy (Sensitive)";
+  if(aqi <= 200) return "🟥 Unhealthy";
+  return "🟪 Hazardous";
+}
+
+// ===== LOGIN =====
+function login(){
+  fetch("/api/login/", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({username:user.value,password:pass.value})
+  })
+  .then(r=>r.json())
+  .then(d=>{
+    if(d.status==="success"){
+      loginBox.style.display="none";
+    } else alert("Invalid login");
+  });
+}
+
+// ===== MAP =====
+var map = L.map('map').setView([22.5, 78.9], 5);
+
+// 🌍 Light (your current)
+const lightMap = L.tileLayer(
+  'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+  {
+    attribution: '&copy; OpenStreetMap &copy; CARTO',
+    subdomains: 'abcd',
+    maxZoom: 19
+  }
+);
+
+// 🌙 Dark mode (PRO UI)
+const darkMap = L.tileLayer(
+  'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+  {
+    attribution: '&copy; OpenStreetMap &copy; CARTO',
+    subdomains: 'abcd',
+    maxZoom: 19
+  }
+);
+
+// 🛰️ Satellite (Google-like)
+const satelliteMap = L.tileLayer(
+  'https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+  {
+    maxZoom: 20,
+    subdomains:['mt0','mt1','mt2','mt3']
+  }
+);
+
+// 🌐 Default load
+lightMap.addTo(map);
+
+// 🌫 AQI overlay (keep this)
+const aqiLayer = L.tileLayer(
+  'https://tiles.waqi.info/tiles/usepa-aqi/{z}/{x}/{y}.png?token=c4b4e5f957842facdbfe14d88fe10094d8ae18ee',
+  { opacity: 0.85 }
+).addTo(map);
+
+// 🎛️ Layer control (Google-style switch)
+L.control.layers(
+  {
+    "☀ Light": lightMap,
+    "🌙 Dark": darkMap,
+    "🛰 Satellite": satelliteMap
+  },
+  {
+    "🌫 AQI": aqiLayer
+  }
+).addTo(map);
+// ===== GRAPH =====
+let chartData = [];
+const chart = new Chart(document.getElementById('aqiChart'), {
+  type: 'line',
+  data: { labels: [], datasets: [{ label:"AQI", data: [] }] },
+  options: { responsive:false }
+});
+
+function updateGraph(aqi){
+  let t = new Date().toLocaleTimeString();
+  chartData.push(aqi);
+
+  if(chartData.length > 10){
+    chartData.shift();
+    chart.data.labels.shift();
+  }
+
+  chart.data.labels.push(t);
+  chart.data.datasets[0].data = chartData;
+  chart.update();
+}
+
+// ===== CORRECT AQI FETCH =====
+function getAQI(lat, lon, popup = null){
+
+  fetch(`/pollution/?lat=${lat}&lon=${lon}&t=${Date.now()}`)
+  .then(r=>r.json())
+  .then(d=>{
+
+    console.log("API RESULT:", d);
+
+    if(!d || d.error){
+      if(popup) popup.setContent("No data ❌");
+      return;
+    }
+
+    let aqi = d.aqi;
+    let level = getAQIColor(aqi);
+
+    updateGraph(aqi);
+
+    // ✅ DASHBOARD
+    let oldAQI = window.prevAQI || 0;
+    window.prevAQI = aqi;
+
+    let blink = Math.abs(oldAQI - aqi) > 5 ? "blink" : "";
+
+    dashboardBox.innerHTML = `
+       <b>Dashboard</b><br>
+       ${d.city}<br>
+       AQI: <span class="${blink}">${aqi}</span><br>
+       ${level}<br>
+       🔮 Future AQI: <span id="prediction">Loading...</span>
+      `;
+
+    // ✅ POPUP FIX (THIS WAS MISSING)
+    if(popup){
+      popup.setContent(`
+        <b>${d.city}</b><br>
+        AQI: ${aqi}<br>
+        ${level}
+      `);
+    }
+
+    fetch("/api/predict/")
+    .then(r=>r.json())
+    .then(p=>{
+      document.getElementById("prediction").innerText = p.prediction;
+    });
+
+  })
+  .catch(()=>{
+    if(popup) popup.setContent("Error fetching AQI ❌");
+  });
+
+}
+// ===== FIXED MAP CLICK =====
+map.on('click', function(e){
+
+  let lat = e.latlng.lat;
+  let lon = e.latlng.lng;
+  window.lastLat = lat;
+  window.lastLon = lon;
+
+  let popup = L.popup()
+    .setLatLng([lat, lon])
+    .setContent("Loading AQI...")
+    .openOn(map);
+
+  // ✅ PASS popup here
+  getAQI(lat, lon, popup);
+
+});
+
+// ===== SEARCH (WORKING) =====
+let searchMarker = null;
+let highlightCircle = null;
+
+document.getElementById("searchBox").addEventListener("keydown", function(e){
+  if(e.key === "Enter"){
+
+    let query = this.value + ", India";
+
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}`)
+    .then(r=>r.json())
+    .then(data=>{
+
+      if(data.length === 0){
+        alert("Location not found ❌");
+        return;
+      }
+
+      let lat = parseFloat(data[0].lat);
+      let lon = parseFloat(data[0].lon);
+      window.lastLat = lat;
+      window.lastLon = lon;
+
+      map.flyTo([lat, lon], 12);
+
+      if(searchMarker) map.removeLayer(searchMarker);
+      searchMarker = L.marker([lat, lon]).addTo(map);
+
+      if(highlightCircle) map.removeLayer(highlightCircle);
+      highlightCircle = L.circle([lat, lon], {
+        radius: 5000,
+        color: "blue",
+        fillOpacity: 0.2
+      }).addTo(map);
+
+      getAQI(lat, lon); // ✅ FIXED
+
+    });
+
+  }
+});
+
+// ===== REGISTER =====
+function register(){
+  fetch("/api/register/", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      username:user.value,
+      password:pass.value
+    })
+  })
+  .then(r=>r.json())
+  .then(d=>{
+    if(d.status==="created"){
+      alert("User registered ✅");
+    } else {
+      alert("User already exists ❌");
+    }
+  });
+}
+
+// ===== RESET PASSWORD =====
+function resetPassword(){
+  let newPass = prompt("Enter new password:");
+
+  fetch("/api/reset-password/", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      username:user.value,
+      new_password:newPass
+    })
+  })
+  .then(r=>r.json())
+  .then(d=>{
+    if(d.status==="updated"){
+      alert("Password updated ✅");
+    } else {
+      alert("User not found ❌");
+    }
+  });
+}
+  setInterval(()=>{
+  if(window.lastLat && window.lastLon){
+    getAQI(window.lastLat, window.lastLon);
+  }
+}, 5000);
+setInterval(loadHeatmap, 10000);
+</script>
+</body>
+</html>
