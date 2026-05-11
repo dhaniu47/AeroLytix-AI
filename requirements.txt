@@ -1,4 +1,8 @@
-requirements
 fastapi
 uvicorn
 earthengine-api
+django
+gunicorn
+pandas
+numpy
+scikit-learn
