@@ -36,6 +36,8 @@ AI-powered real-time Air Quality Analytics and Prediction Platform.
 ---
 
 ## 📊 Screenshots
+![Login Logout Reset](screenshots/login_logout_reset.png)
+
 
 ### ☀ Light Mode
 
