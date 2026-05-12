@@ -1,5 +1,5 @@
 from django.http import JsonResponse
-from pollution.models import PollutionData
+from .models import PollutionData
 
 def home(request):
     return JsonResponse({"status": "API working"})
