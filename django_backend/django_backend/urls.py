@@ -6,6 +6,7 @@ from pollution.views import login_view
 urlpatterns = [
     path('', views.home),
     path('admin/', admin.site.urls),
+    path('', views.index, name='index'),
 
     # ===== AUTH =====
     path('api/login/', login_view),
