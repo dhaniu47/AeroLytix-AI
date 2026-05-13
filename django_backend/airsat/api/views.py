@@ -1,5 +1,5 @@
 from django.http import JsonResponse
-from .models import PollutionData
+from airsat.pollution.models import PollutionData
 
 def home(request):
     return JsonResponse({"status": "API working"})

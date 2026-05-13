@@ -38,8 +38,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
-    "pollution",
-    "api",
+    "airsat.pollution",
+    "airsat.api",
 ]
 
 MIDDLEWARE = [
