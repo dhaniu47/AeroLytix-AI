@@ -2,12 +2,12 @@ from django.contrib import admin
 from django.urls import path
 from pollution import views
 from pollution.views import login_view
-
+from pollution.views import index
 urlpatterns = [
     path('', views.home),
     path('admin/', admin.site.urls),
     path('', views.index, name='index'),
-
+    path('', index)
     # ===== AUTH =====
     path('api/login/', login_view),
     path('api/register/', views.register),
