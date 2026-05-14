@@ -8,10 +8,14 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from django.db.models import Avg, Max
 from django.core.cache import cache
+from django.shortcuts import render
 
 from .models import PollutionData
 from sklearn.linear_model import LinearRegression
+from django.http import HttpResponse
 
+def index(request):
+    return HttpResponse("AeroLytix AI Running Successfully")
 # 🔐 YOUR API KEY
 API_KEY = "59f94b454a8b55e8d55f552b6dda2e46"
 
@@ -235,3 +239,6 @@ def history(request):
 
 def dashboard(request):
     return JsonResponse({"message": "ok"})
+
+def index(request):
+    return render(request, "index.html")
