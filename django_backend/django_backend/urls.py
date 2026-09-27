@@ -1,33 +1,34 @@
 from django.contrib import admin
 from django.urls import path
+
 from pollution import views
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path("admin/", admin.site.urls),
 
-    # HOME
-    path('', views.index, name='index'),
+    path("", views.index, name="index"),
 
-    # AUTH
-    path('api/login/', views.login_view),
-    path('api/register/', views.register),
-    path('api/reset-password/', views.reset_password),
+    # Authentication
+    path("api/login/", views.login_view, name="api-login"),
+    path("api/logout/", views.logout_view, name="api-logout"),
+    path("api/register/", views.register, name="api-register"),
+    path("api/reset-password/", views.reset_password, name="api-reset-password"),
 
-    # DATA
-    path('api/data/', views.get_pollution_data),
-    path('save/', views.save_data),
+    # Data
+    path("api/data/", views.get_pollution_data, name="api-data"),
+    path("save/", views.save_data, name="save"),
 
-    # CORE
-    path('pollution/', views.pollution),
+    # Core
+    path("pollution/", views.pollution, name="pollution"),
 
     # ML
-    path('api/predict/', views.predict_api),
+    path("api/predict/", views.predict_api, name="api-predict"),
 
-    # ANALYTICS
-    path('analytics_data/', views.analytics_data),
+    # Analytics
+    path("analytics_data/", views.analytics_data, name="analytics-data"),
 
-    # EXTRA
-    path('tiles/', views.tiles),
-    path('history/', views.history),
-    path('dashboard/', views.dashboard),
+    # Extra
+    path("tiles/", views.tiles, name="tiles"),
+    path("history/", views.history, name="history"),
+    path("dashboard/", views.dashboard, name="dashboard"),
 ]
