@@ -84,6 +84,7 @@ html, body { margin:0; padding:0; height:100%; overflow:hidden; font-family:Aria
 <div id="topBar">
   <span>🌍 AirSat AI</span>
   <button onclick="toggleMode()">Switch</button>
+  <button id="logoutBtn" onclick="logoutUser()" style="display:none;">Logout</button>
 </div>
 
 <div id="infoBox">Click map to get AQI</div>
@@ -209,6 +210,23 @@ function login(){
 }
 
 // ===== LOGOUT =====
+function syncAuthState(){
+  fetch("/api/data/", {credentials:"same-origin"})
+    .then(r => {
+      if(r.ok){
+        loginBox.style.display="none";
+        logoutBtn.style.display="inline-block";
+      } else {
+        loginBox.style.display="block";
+        logoutBtn.style.display="none";
+      }
+    })
+    .catch(()=>{
+      loginBox.style.display="block";
+      logoutBtn.style.display="none";
+    });
+}
+
 function logoutUser(){
   fetch("/api/logout/", {
     method:"POST",
@@ -219,11 +237,14 @@ function logoutUser(){
   .then(({ok, data})=>{
     if(ok){
       loginBox.style.display="block";
+      logoutBtn.style.display="none";
     } else {
       alert(data.error || "Logout failed");
     }
   });
 }
+
+syncAuthState();
 
 // ===== REGISTER =====
 function register(){
