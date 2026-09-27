@@ -117,7 +117,7 @@ let heatLayer = null;
 <script>
 function loadHeatmap(){
 
-  fetch("/api/data/")
+  fetch("/api/data/", {credentials:"same-origin"})
   .then(r => r.json())
   .then(res => {
 
@@ -169,19 +169,113 @@ function getAQIColor(aqi){
   return "🟪 Hazardous";
 }
 
+// ===== CSRF =====
+function getCookie(name){
+  const cookies = document.cookie ? document.cookie.split(";") : [];
+  for (const cookie of cookies){
+    const [key, ...rest] = cookie.trim().split("=");
+    if (key === name) return decodeURIComponent(rest.join("="));
+  }
+  return null;
+}
+
+function csrfHeaders(){
+  return {
+    "Content-Type":"application/json",
+    "X-CSRFToken":getCookie("csrftoken") || ""
+  };
+}
+
 // ===== LOGIN =====
 function login(){
   fetch("/api/login/", {
     method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({username:user.value,password:pass.value})
+    credentials:"same-origin",
+    headers:csrfHeaders(),
+    body:JSON.stringify({
+      username:user.value,
+      password:pass.value
+    })
   })
-  .then(r=>r.json())
-  .then(d=>{
-    if(d.status==="success"){
+  .then(async r => ({ok:r.ok, data:await r.json()}))
+  .then(({ok,d})=>{
+    if(ok && d.status==="success"){
       loginBox.style.display="none";
-    } else alert("Invalid login");
+    } else {
+      alert(d.error || "Invalid login");
+    }
+  })
+  .catch(()=>alert("Login request failed"));
+}
+
+// ===== LOGOUT =====
+function logoutUser(){
+  fetch("/api/logout/", {
+    method:"POST",
+    credentials:"same-origin",
+    headers:csrfHeaders()
+  })
+  .then(async r => ({ok:r.ok, data:await r.json()}))
+  .then(({ok,d})=>{
+    if(ok){
+      loginBox.style.display="block";
+    } else {
+      alert(d.error || "Logout failed");
+    }
   });
+}
+
+// ===== REGISTER =====
+function register(){
+  fetch("/api/register/", {
+    method:"POST",
+    credentials:"same-origin",
+    headers:csrfHeaders(),
+    body:JSON.stringify({
+      username:user.value,
+      password:pass.value
+    })
+  })
+  .then(async r => ({ok:r.ok, data:await r.json()}))
+  .then(({ok,d})=>{
+    if(ok && d.status==="created"){
+      alert("User registered. Please log in.");
+    } else {
+      const message = Array.isArray(d.error) ? d.error.join("\\n") : (d.error || "Registration failed");
+      alert(message);
+    }
+  })
+  .catch(()=>alert("Registration request failed"));
+}
+
+// ===== RESET PASSWORD =====
+function resetPassword(){
+  const currentPass = prompt("Enter your current password:");
+  if(currentPass === null) return;
+
+  const newPass = prompt("Enter your new password:");
+  if(newPass === null) return;
+
+  fetch("/api/reset-password/", {
+    method:"POST",
+    credentials:"same-origin",
+    headers:csrfHeaders(),
+    body:JSON.stringify({
+      current_password:currentPass,
+      new_password:newPass
+    })
+  })
+  .then(async r => ({ok:r.ok, data:await r.json()}))
+  .then(({ok,d})=>{
+    if(ok && d.status==="updated"){
+      alert("Password updated. Please log in again.");
+      loginBox.style.display="block";
+    } else {
+      const message = Array.isArray(d.error) ? d.error.join("\\n") : (d.error || "Password update failed");
+      alert(message);
+    }
+  })
+  .catch(()=>alert("Password reset request failed"));
 }
 
 // ===== MAP =====
@@ -261,7 +355,7 @@ function updateGraph(aqi){
 // ===== CORRECT AQI FETCH =====
 function getAQI(lat, lon, popup = null){
 
-  fetch(`/pollution/?lat=${lat}&lon=${lon}&t=${Date.now()}`)
+  fetch(`/pollution/?lat=${lat}&lon=${lon}&t=${Date.now()}`, {credentials:"same-origin"})
   .then(r=>r.json())
   .then(d=>{
 
@@ -300,7 +394,7 @@ function getAQI(lat, lon, popup = null){
       `);
     }
 
-    fetch("/api/predict/")
+    fetch("/api/predict/", {credentials:"same-origin"})
     .then(r=>r.json())
     .then(p=>{
       document.getElementById("prediction").innerText = p.prediction;
