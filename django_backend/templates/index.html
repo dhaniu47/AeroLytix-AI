@@ -198,11 +198,11 @@ function login(){
     })
   })
   .then(async r => ({ok:r.ok, data:await r.json()}))
-  .then(({ok,d})=>{
-    if(ok && d.status==="success"){
+  .then(({ok, data})=>{
+    if(ok && data.status==="success"){
       loginBox.style.display="none";
     } else {
-      alert(d.error || "Invalid login");
+      alert(data.error || "Invalid login");
     }
   })
   .catch(()=>alert("Login request failed"));
@@ -216,11 +216,11 @@ function logoutUser(){
     headers:csrfHeaders()
   })
   .then(async r => ({ok:r.ok, data:await r.json()}))
-  .then(({ok,d})=>{
+  .then(({ok, data})=>{
     if(ok){
       loginBox.style.display="block";
     } else {
-      alert(d.error || "Logout failed");
+      alert(data.error || "Logout failed");
     }
   });
 }
@@ -237,11 +237,11 @@ function register(){
     })
   })
   .then(async r => ({ok:r.ok, data:await r.json()}))
-  .then(({ok,d})=>{
-    if(ok && d.status==="created"){
+  .then(({ok, data})=>{
+    if(ok && data.status==="created"){
       alert("User registered. Please log in.");
     } else {
-      const message = Array.isArray(d.error) ? d.error.join("\\n") : (d.error || "Registration failed");
+      const message = Array.isArray(data.error) ? data.error.join("\\n") : (data.error || "Registration failed");
       alert(message);
     }
   })
@@ -266,12 +266,12 @@ function resetPassword(){
     })
   })
   .then(async r => ({ok:r.ok, data:await r.json()}))
-  .then(({ok,d})=>{
-    if(ok && d.status==="updated"){
+  .then(({ok, data})=>{
+    if(ok && data.status==="updated"){
       alert("Password updated. Please log in again.");
       loginBox.style.display="block";
     } else {
-      const message = Array.isArray(d.error) ? d.error.join("\\n") : (d.error || "Password update failed");
+      const message = Array.isArray(data.error) ? data.error.join("\\n") : (data.error || "Password update failed");
       alert(message);
     }
   })
@@ -358,7 +358,7 @@ function getAQI(lat, lon, popup = null){
 
     console.log("API RESULT:", d);
 
-    if(!d || d.error){
+    if(!d || data.error){
       if(popup) popup.setContent("No data ❌");
       return;
     }
