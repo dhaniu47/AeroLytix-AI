@@ -113,8 +113,8 @@ z-index:1000;"></canvas>
 <!-- SAME HEAD + STYLE (NO CHANGE) -->
 
 <!-- SAME HEAD + STYLE (NO CHANGE) -->
-let heatLayer = null;
 <script>
+let heatLayer = null;
 function loadHeatmap(){
 
   fetch("/api/data/", {credentials:"same-origin"})
@@ -314,10 +314,7 @@ const satelliteMap = L.tileLayer(
 lightMap.addTo(map);
 
 // 🌫 AQI overlay (keep this)
-const aqiLayer = L.tileLayer(
-  'https://tiles.waqi.info/tiles/usepa-aqi/{z}/{x}/{y}.png?token=c4b4e5f957842facdbfe14d88fe10094d8ae18ee',
-  { opacity: 0.85 }
-).addTo(map);
+const aqiLayer = L.layerGroup().addTo(map);
 
 // 🎛️ Layer control (Google-style switch)
 L.control.layers(
@@ -466,47 +463,7 @@ document.getElementById("searchBox").addEventListener("keydown", function(e){
   }
 });
 
-// ===== REGISTER =====
-function register(){
-  fetch("/api/register/", {
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      username:user.value,
-      password:pass.value
-    })
-  })
-  .then(r=>r.json())
-  .then(d=>{
-    if(d.status==="created"){
-      alert("User registered ✅");
-    } else {
-      alert("User already exists ❌");
-    }
-  });
-}
 
-// ===== RESET PASSWORD =====
-function resetPassword(){
-  let newPass = prompt("Enter new password:");
-
-  fetch("/api/reset-password/", {
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      username:user.value,
-      new_password:newPass
-    })
-  })
-  .then(r=>r.json())
-  .then(d=>{
-    if(d.status==="updated"){
-      alert("Password updated ✅");
-    } else {
-      alert("User not found ❌");
-    }
-  });
-}
   setInterval(()=>{
   if(window.lastLat && window.lastLon){
     getAQI(window.lastLat, window.lastLon);
