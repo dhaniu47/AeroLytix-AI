@@ -336,8 +336,6 @@ const satelliteMap = L.tileLayer(
 lightMap.addTo(map);
 
 // 🌫 AQI overlay (keep this)
-const aqiLayer = heatLayer ? heatLayer : L.layerGroup();
-L.control.layers({}, {}).addTo(map);
 
 // 🎛️ Layer control (Google-style switch)
 const baseLayers = {
