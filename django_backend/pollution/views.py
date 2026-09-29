@@ -1,4 +1,5 @@
 import json
+import os
 import pandas as pd
 import requests
 from django.http import JsonResponse
@@ -17,7 +18,7 @@ from django.http import HttpResponse
 def index(request):
     return HttpResponse("AeroLytix AI Running Successfully")
 # 🔐 YOUR API KEY
-API_KEY = "59f94b454a8b55e8d55f552b6dda2e46"
+API_KEY = os.environ.get("OPENWEATHER_API_KEY", "")
 
 
 # =========================
@@ -124,6 +125,9 @@ def pollution(request):
         return JsonResponse(cached)
 
     try:
+        if not API_KEY:
+            return JsonResponse({"error": "OPENWEATHER_API_KEY is not configured"}, status=503)
+
         # ===== OPENWEATHER AQI =====
         url = f"http://api.openweathermap.org/data/2.5/air_pollution?lat={lat}&lon={lon}&appid={API_KEY}"
         res = requests.get(url).json()
