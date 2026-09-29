@@ -100,3 +100,9 @@ Dhaneswari Behera
 
 GitHub:
 https://github.com/dhaniu47
+
+## 🚀 Deploy Live on Render
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/dhaniu47/AeroLytix-AI)
+
+The Blueprint provisions the Django web service and PostgreSQL database. During deployment, set the `OPENWEATHER_API_KEY` environment variable in Render.
